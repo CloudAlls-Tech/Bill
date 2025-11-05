@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @page {
+            size: auto;
+            margin: 0mm;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                padding: 0;
+                margin: 0;
+            }
+            .no-print {
+                /* This CSS rule will still be here as a fallback */
+                display: none;
+            }
+            .print-shadow-none {
+                box-shadow: none;
+            }
+            .print-p-0 {
+                padding: 0;
+            }
+            .print-m-0 {
+                margin: 0;
+            }
+            .print-w-full {
+                width: 100%;
+            }
+            .print-max-w-none {
+                max-width: none;
+            }
+        }
+        .invoice-input {
+            @apply w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none;
+        }
+        .invoice-input-sm {
+            @apply w-full p-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none;
+        }
+        .btn {
+            @apply px-4 py-2 rounded-md font-semibold text-white shadow-sm transition-colors duration-150 text-center;
+        }
+        .btn-blue {
+            @apply bg-blue-600 hover:bg-blue-700;
+        }
+        .btn-green {
+            @apply bg-green-600 hover:bg-green-700;
+        }
+        .btn-red {
+            @apply bg-red-600 hover:bg-red-700;
+        }
+        .btn-gray {
+            @apply bg-gray-500 hover:bg-gray-600;
+        }
+        
+        /* --- STYLES FOR LOGO AND QR --- */
+        .company-logo {
+            max-width: 250px;
+            max-height: 125px;
+            object-fit: contain;
+        }
+        .payment-qr {
+            max-width: 150px; /* QR code width */
+            max-height: 150px; /* QR code height */
+            object-fit: contain;
+        }
+
+        /* --- STYLES FOR SEAL --- */
+        .seal-image {
+            max-height: 150px; /* Seal image height */
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto print-m-0 print-p-0">
+
+        <div id="invoice-paper" class="bg-white rounded-lg shadow-lg p-6 md:p-10 print-shadow-none print-w-full print-max-w-none">
+            
+            <header class="flex flex-col md:flex-row items-start mb-8">
+                
+                <div class="md:w-[20%] mb-4 md:mb-0">
+                    <img id="company-logo" class="company-logo hidden" alt="Company Logo" />
+                </div>
+
+                <div class="md:w-[40%] mb-4 md:mb-0">
+                    <h2 id="company-name" class="text-3xl font-bold text-gray-900">CloudAlls</h2>
+                    <p id="company-info" class="text-gray-600 whitespace-pre-line">
+                        www.cloudalls.com
++91 918 826 8135 | +91 907 220 8135
+cloudalls.com@gmail.com
+                    </p>
+                </div>
+
+                <div class="md:w-[40%] text-left md:text-right">
+                    <h1 class="text-4xl font-bold uppercase text-gray-800 mb-2">INVOICE</h1>
+                    <div class="grid grid-cols-2 gap-x-4">
+                        <span class="font-semibold text-gray-700">Date:</span>
+                        <span id="invoice-date" class="text-gray-900"></span>
+                        <span class="font-semibold text-gray-700">Invoice #:</span>
+                        <span id="invoice-number" class="text-gray-900 font-mono"></span>
+                    </div>
+                </div>
+            </header>
+            <div class="flex flex-col md:flex-row gap-6 mb-8">
+                
+                <div class="md:w-[45%] p-4 rounded-lg">
+                    <h3 class="font-semibold text-gray-700 mb-2">BILL TO:</h3>
+                    <textarea id="bill-to-name" class="invoice-input" rows="4" placeholder="Enter Name and Address"></textarea>
+                </div>
+                
+                <div class="md:w-[35%] p-4 rounded-lg">
+                    <h3 class="font-semibold text-gray-700 mb-2"><br>PAYMENT:</h3>
+                    <p id="payment-info" class="text-gray-600 whitespace-pre-line">
+                        UPI No: 907 220 8135
+                        UPI ID: cloudalls@sbi
+                    </p>
+                </div>
+
+                <div class="md:w-[20%] p-4 rounded-lg flex items-center justify-center">
+                    <img id="payment-qr" class="payment-qr hidden" alt="Payment QR Code" style="min-width: 120px; min-height: 120px;" />
+                </div>
+            </div>
+            <div class="mb-8">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-800 text-white">
+                        <tr>
+                            <th class="p-2">DESCRIPTION</th>
+                            <th class="p-2 w-20">QTY</th>
+                            <th class="p-2 w-32">UNIT PRICE</th>
+                            <th class="p-2 w-32 text-right">TOTAL</th>
+                            <th class="p-2 w-12 no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-items">
+                        </tbody>
+                </table>
+                <div class="mt-4 flex gap-3 no-print">
+                    <div class="relative flex-1">
+                        <input type="text" id="product-search" class="invoice-input-sm w-full" placeholder="Search or click to see all services..." />
+                        <div id="product-results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg hidden">
+                        </div>
+                    </div>
+                    <button id="add-custom-btn" class="btn btn-green text-sm">Add Custom Item</button>
+                </div>
+                </div>
+
+            <div class="flex justify-end mb-8">
+                <div class="w-full md:w-1/2">
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="font-semibold text-gray-700">SUBTOTAL</span>
+                            <span id="subtotal" class="font-semibold text-gray-900">0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-gray-700">ADVANCE</span>
+                            <input type="number" id="advance" value="0.00" class="invoice-input-sm w-32 text-right" />
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-gray-700">TAX RATE (%)</span>
+                            <input type="number" id="tax-rate" value="0.00" class="invoice-input-sm w-32 text-right" />
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-semibold text-gray-700">TOTAL TAX</span>
+                            <span id="total-tax" class="font-semibold text-gray-900">0.00</span>
+                        </div>
+                        <div class="border-t-2 border-gray-800 my-2"></div>
+                        <div class="flex justify-between">
+                            <span class="text-xl font-bold text-gray-900">TOTAL</span>
+                            <span id="grand-total" class="text-xl font-bold text-gray-900">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6 mb-8">
+                
+                <div class="md:w-[60%] p-4 rounded-lg">
+                    <h3 class="font-semibold text-gray-700 mb-2">Remarks / Payment Instructions</h3>
+                    <textarea id="remarks" class="invoice-input" rows="3" placeholder="e.g., 1- Equipment rental is not included.">
+                        1- Equipment rental is not included.
+                    </textarea>
+                </div>
+                
+                <div class="mb-1" style="min-height: 90px;">
+                    <img id="seal-image" class="mx-auto seal-image hidden" alt="Company Seal" />
+                </div>
+            </div>
+
+        </div>
+        
+        <div id="bottom-controls" class="no-print bg-white p-4 rounded-lg shadow-md mt-6 flex flex-wrap gap-3 justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Invoice Generator</h1>
+            <div class="flex flex-wrap gap-3">
+                <a href="settings.html" id="settings-link" class="btn btn-gray">Settings</a>
+                <button id="export-csv-btn" class="btn btn-green">Export CSV</button>
+                <button id="save-google-sheet-btn" class="btn bg-purple-600 hover:bg-purple-700">Save to Google Sheet</button>
+                <button id="reset-btn" class="btn btn-red">New Invoice</button>
+                <button id="print-btn" class="btn btn-blue">Print / Save as PDF</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div id="modal-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+        
+        <div id="modal-box" class="relative bg-white w-full max-w-sm p-6 rounded-lg shadow-xl z-10">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Settings Access</h3>
+            <p class="text-sm text-gray-600 mb-4">Please enter the settings credentials to proceed.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="settings-username-input" class="block text-sm font-medium text-gray-700">Settings Username</label>
+                    <input type="text" id="settings-username-input" class="invoice-input mt-1" />
+                </div>
+                <div>
+                    <label for="settings-password-input" class="block text-sm font-medium text-gray-700">Settings Password</label>
+                    <input type="password" id="settings-password-input" class="invoice-input mt-1" />
+                </div>
+            </div>
+            
+            <p id="settings-error-message" class="text-red-500 text-sm text-center my-3 hidden">Incorrect username or password.</p>
+            
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="modal-cancel-btn" class="btn btn-gray">Cancel</button>
+                <button id="modal-confirm-btn" class="btn btn-blue">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        
+        // --- LOGIN GUARD ---
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+        // --- END GUARD ---
+
+        window.onload = () => {
+            const state = {
+                items: [],
+                advance: 0.00,
+                taxRate: 0.00,
+            };
+
+            const selectors = {
+                invoiceDate: document.getElementById('invoice-date'),
+                invoiceNumber: document.getElementById('invoice-number'),
+                companyName: document.getElementById('company-name'),
+                companyInfo: document.getElementById('company-info'),
+                paymentInfo: document.getElementById('payment-info'),
+                billToName: document.getElementById('bill-to-name'),
+                remarks: document.getElementById('remarks'),
+                itemsTbody: document.getElementById('invoice-items'),
+                
+                productSearch: document.getElementById('product-search'),
+                productResults: document.getElementById('product-results'),
+
+                addCustomBtn: document.getElementById('add-custom-btn'),
+                subtotal: document.getElementById('subtotal'),
+                advance: document.getElementById('advance'),
+                taxRate: document.getElementById('tax-rate'),
+                totalTax: document.getElementById('total-tax'),
+                grandTotal: document.getElementById('grand-total'),
+                printBtn: document.getElementById('print-btn'),
+                exportCsvBtn: document.getElementById('export-csv-btn'), 
+                saveGoogleSheetBtn: document.getElementById('save-google-sheet-btn'),
+                resetBtn: document.getElementById('reset-btn'),
+                
+                companyLogo: document.getElementById('company-logo'),
+                paymentQR: document.getElementById('payment-qr'),
+                sealImage: document.getElementById('seal-image'), 
+                
+                // --- START: Modal Selectors ---
+                settingsLink: document.getElementById('settings-link'),
+                settingsModal: document.getElementById('settings-modal'),
+                modalOverlay: document.getElementById('modal-overlay'),
+                modalBox: document.getElementById('modal-box'),
+                settingsUsernameInput: document.getElementById('settings-username-input'),
+                settingsPasswordInput: document.getElementById('settings-password-input'),
+                settingsErrorMessage: document.getElementById('settings-error-message'),
+                modalCancelBtn: document.getElementById('modal-cancel-btn'),
+                modalConfirmBtn: document.getElementById('modal-confirm-btn'),
+                // --- END: Modal Selectors ---
+                
+                bottomControls: document.getElementById('bottom-controls'),
+            };
+
+            const defaultSettings = {
+                companyName: "CloudAlls",
+                companyInfo: "www.cloudalls.com\n+91 918 826 8135 | +91 907 220 8135\ncloudalls.com@gmail.com",
+                paymentInfo: "UPI No: 907 220 8135\nUPI ID: cloudalls@sbi",
+                productList: [
+                    { "description": "Photography & Recording", "price": "800.00" },
+                    { "description": "Wall Opener", "price": "250.00" }
+                ],
+                companyLogo: "",
+                paymentQR: "",
+                sealImage: "", 
+            };
+
+            // --- Settings Access Credentials ---
+            const settingsDefaultCredentials = {
+                username: "settings",
+                password: "admin"
+            };
+            
+            function getSettingsLoginCredentials() {
+                const saved = localStorage.getItem('invoiceSettingsLogin');
+                if (!saved) {
+                     // Set default settings login if not present
+                    localStorage.setItem('invoiceSettingsLogin', JSON.stringify(settingsDefaultCredentials));
+                    return settingsDefaultCredentials;
+                }
+                return { ...settingsDefaultCredentials, ...JSON.parse(saved) };
+            }
+            // --- END: Settings Access Credentials ---
+
+
+            function getSettings() {
+                const settings = localStorage.getItem('invoiceSettings');
+                const defaults = defaultSettings;
+                const saved = settings ? JSON.parse(settings) : {};
+                return { ...defaults, ...saved };
+            }
+
+            function loadSettings() {
+                const settings = getSettings();
+                
+                if (selectors.companyName) selectors.companyName.textContent = settings.companyName;
+                if (selectors.companyInfo) selectors.companyInfo.textContent = settings.companyInfo;
+                if (selectors.paymentInfo) selectors.paymentInfo.textContent = settings.paymentInfo;
+
+                if (selectors.sealImage) {
+                    if (settings.sealImage) {
+                        selectors.sealImage.src = settings.sealImage;
+                        selectors.sealImage.classList.remove('hidden');
+                    } else {
+                        selectors.sealImage.classList.add('hidden');
+                    }
+                }
+                
+                if (selectors.companyLogo) {
+                    if (settings.companyLogo) {
+                        selectors.companyLogo.src = settings.companyLogo;
+                        selectors.companyLogo.classList.remove('hidden');
+                    } else {
+                        selectors.companyLogo.classList.add('hidden');
+                    }
+                }
+                if (selectors.paymentQR) {
+                    if (settings.paymentQR) {
+                        selectors.paymentQR.src = settings.paymentQR;
+                        selectors.paymentQR.classList.remove('hidden');
+                    } else {
+                        selectors.paymentQR.classList.add('hidden');
+                    }
+                }
+            }
+
+            function formatCurrency(amount) {
+                return parseFloat(amount).toFixed(2);
+            }
+
+            function getTodayKey() {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                return `${yyyy}-${mm}-${dd}`;
+            }
+            
+            function getUrlDateKey() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const dateParam = urlParams.get('date'); 
+                if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+                    return dateParam;
+                }
+                return getTodayKey();
+            }
+            
+            function getDisplayDate(dateKey) {
+                 const [yyyy, mm, dd] = dateKey.split('-');
+                 return `${dd}-${mm}-${yyyy}`;
+            }
+
+            // --- START: MODIFIED BILL NUMBER LOGIC ---
+
+            /**
+             * Gets the *next* counter number without incrementing it.
+             * This is for display only.
+             */
+            function getNextCounter() {
+                const dateKey = getTodayKey(); 
+                const counterKey = `billCounter_${dateKey}`;
+                // Gets the current counter, adds 1 for display
+                let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1; 
+                return counter;
+            }
+
+            /**
+             * This function only *displays* the next available invoice number.
+             * It does NOT increment the counter.
+             */
+            function generateInvoiceNumber() {
+                const counter = getNextCounter(); // Gets the next number (e.g., 1)
+                
+                const displayDateKey = getUrlDateKey();
+                const [yyyy, mm, dd] = displayDateKey.split('-');
+
+                if (selectors.invoiceDate) selectors.invoiceDate.textContent = getDisplayDate(displayDateKey);
+                if (selectors.invoiceNumber) selectors.invoiceNumber.textContent = `${yyyy}/${mm}${dd}/A${String(counter).padStart(2, '0')}`;
+            }
+
+            /**
+             * This function *actually increments* and saves the counter in localStorage.
+             * It should only be called when an invoice is finalized (e.g., saved).
+             */
+            function incrementAndSaveCounter() {
+                const dateKey = getTodayKey(); 
+                const counterKey = `billCounter_${dateKey}`;
+                // Gets current, adds 1, and SAVES
+                let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1; 
+                localStorage.setItem(counterKey, counter);
+            }
+            // --- END: MODIFIED BILL NUMBER LOGIC ---
+
+
+            function renderItems() {
+                if (!selectors.itemsTbody) return;
+
+                selectors.itemsTbody.innerHTML = '';
+                state.items.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-gray-200';
+                    tr.innerHTML = `
+                        <td class="p-2"><input type="text" class="invoice-input-sm" data-index="${index}" data-field="description" value="${item.description}" placeholder="Item Description"></td>
+                        <td class="p-2"><input type="number" class="invoice-input-sm text-center" data-index="${index}" data-field="qty" value="${item.qty}" min="1"></td>
+                        <td class="p-2"><input type="number" class="invoice-input-sm text-right" data-index="${index}" data-field="unitPrice" value="${item.unitPrice}" min="0" step="0.01"></td>
+                        <td class="p-2 text-right font-medium">${formatCurrency( (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0) )}</td>
+                        <td class="p-2 text-center no-print"><button class="text-red-500 font-bold" data-index="${index}">&times;</button></td>
+                    `;
+                    selectors.itemsTbody.appendChild(tr);
+                });
+                calculateTotals();
+            }
+
+            function calculateTotals() {
+                const subtotal = state.items.reduce((acc, item) => acc + ( (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0) ), 0);
+                const totalTax = subtotal * (state.taxRate / 100);
+                const grandTotal = subtotal + totalTax - state.advance;
+
+                if (selectors.subtotal) selectors.subtotal.textContent = formatCurrency(subtotal);
+                if (selectors.totalTax) selectors.totalTax.textContent = formatCurrency(totalTax);
+                if (selectors.grandTotal) selectors.grandTotal.textContent = formatCurrency(grandTotal);
+            }
+
+            function addItem(description = '', qty = 1, unitPrice = 0.00) {
+                state.items.push({ description, qty, unitPrice: formatCurrency(unitPrice) });
+                renderItems();
+            }
+
+            function updateItem(index, field, value) {
+                state.items[index][field] = value;
+            }
+
+            function removeItem(index) {
+                state.items.splice(index, 1);
+                renderItems();
+            }
+
+            function saveInvoiceData() {
+                const data = {
+                    billToName: selectors.billToName ? selectors.billToName.value : '',
+                    remarks: selectors.remarks ? selectors.remarks.value : '',
+                    items: state.items,
+                    advance: state.advance,
+                    taxRate: state.taxRate
+                };
+                localStorage.setItem('currentInvoice', JSON.stringify(data));
+            }
+
+            function loadInvoiceData() {
+                const data = localStorage.getItem('currentInvoice');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (selectors.billToName) selectors.billToName.value = parsed.billToName;
+                    if (selectors.remarks) selectors.remarks.value = parsed.remarks;
+                    
+                    state.items = parsed.items;
+                    state.advance = parsed.advance;
+                    state.taxRate = parsed.taxRate;
+                    
+                    if (selectors.advance) selectors.advance.value = formatCurrency(parsed.advance);
+                    if (selectors.taxRate) selectors.taxRate.value = formatCurrency(parsed.taxRate);
+
+                    renderItems();
+                } else {
+                    // No default text, add one empty item
+                    addItem('','1','0.00');
+                }
+            }
+
+            function exportToCSV() {
+                if (state.items.length === 0) {
+                    alert("Cannot export an empty invoice.");
+                    return;
+                }
+                const invoiceNum = selectors.invoiceNumber.textContent;
+                const invoiceDate = selectors.invoiceDate.textContent;
+                const billTo = selectors.billToName.value.replace(/,/g, ''); 
+                let csvContent = "InvoiceNum,Date,BillTo,Description,Qty,UnitPrice,LineTotal\n"; 
+                state.items.forEach(item => {
+                    const lineTotal = (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0);
+                    const description = item.description.replace(/,/g, ''); 
+                    const row = [invoiceNum, invoiceDate, billTo, description, item.qty, item.unitPrice, formatCurrency(lineTotal)].join(",");
+                    csvContent += row + "\n";
+                });
+                csvContent += "\n";
+                csvContent += `,,Subtotal,${selectors.subtotal.textContent}\n`;
+                csvContent += `,,Tax (${state.taxRate}%),${selectors.totalTax.textContent}\n`;
+                csvContent += `,,Advance,${formatCurrency(state.advance)}\n`;
+                csvContent += `,,GRAND TOTAL,${selectors.grandTotal.textContent}\n`;
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-s-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                const safeFilename = invoiceNum.replace(/[/\\?%*:|"<>]/g, '_'); 
+                link.setAttribute("download", `invoice_${safeFilename}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // --- START: MODIFIED saveToGoogleSheet function ---
+            function saveToGoogleSheet() {
+                const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyO1K5f3A8hWNLTOLnCJGyNFCAy9ZjTir8DTFXpJLSgSVzBopa71esLgPOV2uKCSczb/exec";
+                if (state.items.length === 0) {
+                    alert("Cannot save an empty invoice.");
+                    return;
+                }
+
+                // --- MODIFICATION ---
+                // First, officially use and increment the invoice number
+                incrementAndSaveCounter();
+                // --- END MODIFICATION ---
+
+                const saveBtn = selectors.saveGoogleSheetBtn;
+                const originalBtnText = saveBtn.textContent;
+                saveBtn.textContent = "Saving...";
+                saveBtn.disabled = true;
+
+                // Make sure to get the *current* invoice number on screen
+                const invoiceNum = selectors.invoiceNumber.textContent;
+                const invoiceDate = selectors.invoiceDate.textContent;
+                const billTo = selectors.billToName.value.replace(/,/g, ''); 
+                const payload = {
+                    items: state.items.map(item => {
+                        const lineTotal = (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0);
+                        return {
+                            invoiceNum: invoiceNum, date: invoiceDate, billTo: billTo,
+                            description: item.description.replace(/,/g, ''),
+                            qty: item.qty, unitPrice: item.unitPrice, lineTotal: formatCurrency(lineTotal)
+                        };
+                    })
+                };
+                fetch(SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors', cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    alert("Invoice backup has been sent to Google Sheets!\nPlease check your sheet to confirm.");
+                }).catch(error => {
+                    console.error('Error sending data:', error);
+                    alert("There was a network error sending the data. Check your internet connection.");
+                }).finally(() => {
+                    saveBtn.textContent = originalBtnText;
+                    saveBtn.disabled = false;
+
+                    // --- MODIFICATION ---
+                    // After saving, show the NEXT available bill number
+                    generateInvoiceNumber(); 
+                    // --- END MODIFICATION ---
+                });
+            }
+            // --- END: MODIFIED saveToGoogleSheet function ---
+
+            // Event Listeners
+            if (selectors.itemsTbody) {
+                selectors.itemsTbody.addEventListener('input', (e) => {
+                    if (!e.target.dataset.index) return;
+                    const { index, field } = e.target.dataset;
+                    updateItem(index, field, e.target.value);
+                    const item = state.items[index];
+                    const rowTotal = (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0);
+                    const row = e.target.closest('tr');
+                    if (row && row.children.length > 3) row.children[3].textContent = formatCurrency(rowTotal);
+                    calculateTotals();
+                    saveInvoiceData();
+                });
+                selectors.itemsTbody.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        removeItem(e.target.dataset.index);
+                        saveInvoiceData();
+                    }
+                });
+            }
+            if (selectors.advance) {
+                selectors.advance.addEventListener('input', (e) => {
+                    state.advance = parseFloat(e.target.value) || 0;
+                    calculateTotals();
+                    saveInvoiceData();
+                });
+            }
+            if (selectors.taxRate) {
+                selectors.taxRate.addEventListener('input', (e) => {
+                    state.taxRate = parseFloat(e.target.value) || 0;
+                    calculateTotals();
+                    saveInvoiceData();
+                });
+            }
+            if (selectors.billToName) selectors.billToName.addEventListener('input', saveInvoiceData);
+            if (selectors.remarks) selectors.remarks.addEventListener('input', saveInvoiceData);
+            if (selectors.addCustomBtn) {
+                selectors.addCustomBtn.addEventListener('click', () => {
+                    addItem('', 1, 0.00);
+                    saveInvoiceData();
+                });
+            }
+            
+            if (selectors.printBtn) {
+                selectors.printBtn.addEventListener('click', () => {
+                    // The onbeforeprint event will handle hiding
+                    window.print();
+                });
+            }
+            if (selectors.exportCsvBtn) selectors.exportCsvBtn.addEventListener('click', exportToCSV);
+            
+            // --- MODIFIED: Listener calls the function
+            if (selectors.saveGoogleSheetBtn) selectors.saveGoogleSheetBtn.addEventListener('click', saveToGoogleSheet);
+            
+            if (selectors.resetBtn) {
+                selectors.resetBtn.addEventListener('click', () => {
+                    localStorage.removeItem('currentInvoice');
+                    state.items = [];
+                    state.advance = 0.00;
+                    state.taxRate = 0.00;
+                    if(selectors.billToName) selectors.billToName.value = ''; 
+                    if(selectors.remarks) selectors.remarks.value = '1- Equipment rental is not included.';
+                    if(selectors.advance) selectors.advance.value = '0.00';
+                    if(selectors.taxRate) selectors.taxRate.value = '0.00';
+                    generateInvoiceNumber(); // This will just show the *next* number, not increment it
+                    renderItems();
+                    addItem('','1','0.00'); 
+                });
+            }
+
+            // --- This is the Product Search Logic ---
+            
+            function renderProductResults(filteredList, settings) {
+                if (!selectors.productResults) return;
+                selectors.productResults.innerHTML = '';
+                
+                if (filteredList.length === 0) {
+                    selectors.productResults.innerHTML = '<div class="p-2 text-gray-500">No results found.</div>';
+                }
+
+                filteredList.forEach(product => {
+                    const originalIndex = settings.productList.findIndex(p => p.description === product.description && p.price === product.price);
+                    
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'p-2 hover:bg-blue-100 cursor-pointer border-b border-gray-100';
+                    itemEl.textContent = `${product.description} (${formatCurrency(product.price || 0)})`;
+                    itemEl.dataset.index = originalIndex;
+                    selectors.productResults.appendChild(itemEl);
+                });
+            }
+
+            if (selectors.productSearch && selectors.productResults) {
+                const settings = getSettings();
+                const productList = settings.productList || [];
+
+                function showResults() {
+                    const searchTerm = selectors.productSearch.value.toLowerCase();
+                    let filtered;
+                    
+                    if (searchTerm === '') {
+                        filtered = productList;
+                    } else {
+                        filtered = productList.filter(p => 
+                            p.description.toLowerCase().includes(searchTerm)
+                        );
+                    }
+                    
+                    renderProductResults(filtered, settings);
+                    selectors.productResults.classList.remove('hidden');
+                }
+
+                selectors.productSearch.addEventListener('input', showResults);
+                selectors.productSearch.addEventListener('focus', showResults);
+                
+                selectors.productResults.addEventListener('click', (e) => {
+                    const itemEl = e.target.closest('[data-index]');
+                    if (itemEl) {
+                        const productIndex = itemEl.dataset.index;
+                        const product = productList[productIndex];
+                        if (product) {
+                            addItem(product.description, 1, product.price);
+                            saveInvoiceData();
+                        }
+                        selectors.productSearch.value = '';
+                        selectors.productResults.classList.add('hidden');
+                    }
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!selectors.productSearch.contains(e.target) && !selectors.productResults.contains(e.target)) {
+                        selectors.productResults.classList.add('hidden');
+                    }
+                });
+            }
+            // --- End New Product Search Logic ---
+
+            // --- START: SETTINGS MODAL LOGIC ---
+            function showSettingsModal() {
+                selectors.settingsModal.classList.remove('hidden');
+                selectors.settingsUsernameInput.value = ""; // Clear username field
+                selectors.settingsPasswordInput.value = ""; // Clear password field
+                selectors.settingsErrorMessage.classList.add('hidden');
+                selectors.settingsUsernameInput.focus(); // Focus username field
+            }
+            
+            function hideSettingsModal() {
+                selectors.settingsModal.classList.add('hidden');
+            }
+
+            function confirmSettingsAccess() {
+                const enteredUsername = selectors.settingsUsernameInput.value;
+                const enteredPassword = selectors.settingsPasswordInput.value;
+                const credentials = getSettingsLoginCredentials(); // Check settings credentials
+
+                if (enteredUsername === credentials.username && enteredPassword === credentials.password) {
+                    // If correct, set a temporary permission in sessionStorage
+                    sessionStorage.setItem('settingsAccessGranted', 'true');
+                    // Redirect to the settings page
+                    window.location.href = 'settings.html';
+                } else {
+                    // If incorrect, show the error message
+                    selectors.settingsErrorMessage.classList.remove('hidden');
+                }
+            }
+
+            if (selectors.settingsLink) {
+                selectors.settingsLink.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent the default link behavior
+                    showSettingsModal(); // Show the modal
+                });
+            }
+            if (selectors.modalCancelBtn) {
+                selectors.modalCancelBtn.addEventListener('click', hideSettingsModal);
+            }
+            if (selectors.modalOverlay) {
+                selectors.modalOverlay.addEventListener('click', hideSettingsModal);
+            }
+            if (selectors.modalConfirmBtn) {
+                selectors.modalConfirmBtn.addEventListener('click', confirmSettingsAccess);
+            }
+            if(selectors.settingsPasswordInput) {
+                selectors.settingsPasswordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmSettingsAccess();
+                    }
+                });
+            }
+            if(selectors.settingsUsernameInput) {
+                selectors.settingsUsernameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmSettingsAccess();
+                    }
+                });
+            }
+            // --- END: SETTINGS MODAL LOGIC ---
+
+            // --- START: JAVASCRIPT PRINT HIDE LOGIC ---
+            window.onbeforeprint = () => {
+                if (selectors.bottomControls) {
+                    selectors.bottomControls.style.display = 'none';
+                }
+            };
+
+            window.onafterprint = () => {
+                if (selectors.bottomControls) {
+                    // Original display is 'flex' from Tailwind classes
+                    selectors.bottomControls.style.display = 'flex';
+                }
+            };
+            // --- END: JAVASCRIPT PRINT HIDE LOGIC ---
+
+
+            // Initial Load
+            loadSettings();
+            generateInvoiceNumber(); // This now just DISPLAYS the next number
+            loadInvoiceData();
+        };
+    </script>
+</body>
+</html>

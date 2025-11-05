@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CloudAlls Invoice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* A very light gray background */
+        }
+        .btn {
+            @apply px-5 py-2 rounded-md font-semibold text-white shadow-sm transition-all duration-200 text-center;
+        }
+        .btn-blue {
+            @apply bg-blue-600 hover:bg-blue-700;
+        }
+        .invoice-input {
+            @apply w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200;
+        }
+        
+        /* --- Animation for the login card --- */
+        .login-card {
+            /* Start state */
+            opacity: 0;
+            transform: translateY(20px);
+            /* Animation properties */
+            animation: fadeInSlideUp 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeInSlideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Animation for error shake --- */
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* --- Button Animation --- */
+        .btn-blue {
+            transform: scale(1);
+            transition: all 0.2s ease-out;
+        }
+        .btn-blue:hover {
+            transform: scale(1.03); /* Grow slightly on hover */
+        }
+        .btn-blue:active {
+            transform: scale(0.98); /* Shrink slightly on click */
+        }
+
+        /* --- Logo Styling --- */
+        .company-logo {
+            max-width: 150px; /* Adjust as needed */
+            height: auto;
+            margin: 0 auto 1.5rem auto; /* Center logo, add spacing below */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="login-card" class="login-card max-w-sm w-full bg-white p-8 rounded-xl shadow-lg">
+        
+        <img src="image/CloudAlls copy.png" alt="CloudAlls Logo" class="company-logo">
+
+        <h1 class="text-3xl font-bold text-center text-gray-900 mb-2">Welcome to CloudAlls</h1>
+        <p class="text-gray-600 text-center mb-6">Please log in to your account.</p>
+        
+        <div class="mb-4">
+            <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+            <input type="text" id="username" class="invoice-input mt-1" placeholder="Enter your username" />
+        </div>
+
+        <div class="mb-6">
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input type="password" id="password" class="invoice-input mt-1" placeholder="Enter your password" />
+        </div>
+
+        <p id="error-message" class="text-red-500 text-sm text-center mb-4 hidden">Incorrect username or password.</p>
+
+        <button id="login-btn" class="btn btn-blue w-full h-11 text-base mt-2">Login</button>
+    </div>
+
+    <script>
+        // --- THIS JAVASCRIPT LOGIC IS UNCHANGED AND CORRECT ---
+        
+        const loginBtn = document.getElementById('login-btn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('error-message');
+        const loginCard = document.getElementById('login-card');
+
+        /**
+         * Gets saved main login credentials from localStorage.
+         * Sets defaults if none are found (for first time run).
+         */
+        function getMainLoginCredentials() {
+            const defaults = {
+                username: "admin",
+                password: "1234"
+            };
+            
+            // This key is for the MAIN login
+            const savedCredentials = localStorage.getItem('invoiceMainLogin');
+            
+            if (!savedCredentials) {
+                // On first run, set the default credentials
+                localStorage.setItem('invoiceMainLogin', JSON.stringify(defaults));
+                return defaults;
+            }
+            
+            return { ...defaults, ...JSON.parse(savedCredentials) };
+        }
+
+        function handleLogin() {
+            const enteredUsername = usernameInput.value;
+            const enteredPassword = passwordInput.value;
+            
+            // Check against the MAIN login credentials
+            const savedCredentials = getMainLoginCredentials();
+
+            if (enteredUsername === savedCredentials.username && enteredPassword === savedCredentials.password) {
+                // Password is correct
+                errorMessage.classList.add('hidden');
+                loginCard.classList.remove('shake'); // Ensure shake is removed on success
+                sessionStorage.setItem('isLoggedIn', 'true');
+                
+                // Send the user to the main invoice page
+                window.location.href = 'index.html';
+                
+            } else {
+                // Password is wrong
+                errorMessage.classList.remove('hidden');
+                // Add the shake animation
+                loginCard.classList.add('shake');
+                // Remove the shake animation after it finishes
+                setTimeout(() => {
+                    loginCard.classList.remove('shake');
+                }, 500); // 500ms matches the animation duration
+            }
+        }
+
+        loginBtn.addEventListener('click', handleLogin);
+        
+        // Allow pressing 'Enter' to log in
+        passwordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+        usernameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+    </script>
+</body>
+</html>

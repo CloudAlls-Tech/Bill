@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Invoice Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .invoice-input {
+            @apply w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none;
+        }
+        .btn {
+            @apply px-5 py-2 rounded-md font-semibold text-white shadow-sm transition-colors duration-150 text-center;
+        }
+        .btn-blue {
+            @apply bg-blue-600 hover:bg-blue-700;
+        }
+        .btn-red {
+            @apply bg-red-600 hover:bg-red-700;
+        }
+        .btn-gray {
+            @apply bg-gray-500 hover:bg-gray-600;
+        }
+        .nav-link {
+            @apply block w-full px-4 py-2 rounded-md text-left text-gray-700 font-medium hover:bg-gray-200;
+        }
+        .nav-link.active {
+            @apply bg-blue-600 text-white hover:bg-blue-700;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">
+                Settings
+            </h1>
+            <a href="index.html" id="back-to-invoice-link" class="text-blue-600 hover:underline font-medium">&larr; Back to Invoice</a>
+        </div>
+
+        <div class="md:flex md:space-x-8">
+
+            <div class="w-full md:w-1/4 mb-6 md:mb-0">
+                <nav class="space-y-2" id="settings-nav">
+                    <button data-target="company" class="nav-link active">Company Details</button><br>
+                    <button data-target="logo" class="nav-link">Company Logo</button><br>
+                    <button data-target="payment" class="nav-link">Payment Information</button><br>
+                    <button data-target="products" class="nav-link">Product / Service List</button><br>
+                    <button data-target="signature" class="nav-link">Signature</button><br>
+                    <button data-target="security" class="nav-link">Security</button>
+                </nav>
+            </div>
+
+            <div class="w-full md:w-3/4">
+                <div class="space-y-6">
+
+                    <div id="company" class="settings-section bg-white shadow-md rounded-lg overflow-hidden">
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Company Details</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="settings-company-name" class="block text-sm font-medium text-gray-700">Company Name</label>
+                                <input id="settings-company-name" class="invoice-input mt-1" />
+                            </div>
+                            <div>
+                                <label for="settings-company-info" class="block text-sm font-medium text-gray-700">Company Info (Address, Phone, etc.)</label>
+                                <textarea id="settings-company-info" class="invoice-input mt-1" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="logo" class="settings-section bg-white shadow-md rounded-lg overflow-hidden hidden">
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Company Logo</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="settings-company-logo" class="block text-sm font-medium text-gray-700">Logo Image (Base64 URL)</label>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">Use an <a href="https://www.base64-image.de/" target="_blank" rel="noopener" class="text-blue-600 hover:underline">online tool</a> to convert your logo PNG/JPG to a Base64 string. Paste the full string here.</p>
+                                <textarea id="settings-company-logo" class="invoice-input font-mono text-xs" rows="5" placeholder="data:image/png;base64,iVBORw0KGgo..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="payment" class="settings-section bg-white shadow-md rounded-lg overflow-hidden hidden">
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-20S00">
+                            <h3 class="text-lg font-semibold text-gray-800">Payment Information</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="settings-payment-info" class="block text-sm font-medium text-gray-700">Payment Info (Separate Lines)</E>
+                                <textarea id="settings-payment-info" class="invoice-input mt-1" rows="3"></textarea>
+                            </div>
+                            <div>
+                                <label for="settings-payment-qr" class="block text-sm font-medium text-gray-700">Payment QR Code (Base64 URL)</label>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">Convert your QR code PNG to a Base64 string and paste it here.</p>
+                                <textarea id="settings-payment-qr" class="invoice-input font-mono text-xs" rows="5" placeholder="data:image/png;base64,..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="products" class="settings-section bg-white shadow-md rounded-lg overflow-hidden hidden">
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Product / Service List</h3>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-gray-600 mb-2">
+                                Enter your services as a JSON array. Example:
+                            </p>
+                            <pre class="text-xs bg-gray-100 p-3 rounded-md overflow-x-auto"><code class="font-mono">[
+  { "description": "Photography", "price": "800.00" },
+  { "description": "Wall Opener", "price": "250.00" }
+]</code></pre>
+                            <textarea id="settings-product-list" class="invoice-input font-mono mt-4" rows="10"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="signature" class="settings-section bg-white shadow-md rounded-lg overflow-hidden hidden">
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Signature</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="settings-seal-image" class="block text-sm font-medium text-gray-700">Seal Image (Base64 URL)</label>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">Convert your company seal PNG to a Base64 string and paste it here.</p>
+                                <textarea id="settings-seal-image" class="invoice-input font-mono text-xs" rows="5" placeholder="data:image/png;base64,..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="security" class="settings-section bg-white rounded-lg overflow-hidden hidden">
+                        
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Main Login Credentials (for login.html)</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="settings-main-username" class="block text-sm font-medium text-gray-700">Main Username</label>
+                                <input id="settings-main-username" class="invoice-input mt-1" />
+                            </div>
+                            <div>
+                                <label for="settings-main-new-password" class="block text-sm font-medium text-gray-700">New Main Password</label>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">Only type here to change the password. Otherwise, leave blank.</p>
+                                <input id="settings-main-new-password" type="password" class="invoice-input" placeholder="Enter new main password" />
+                            </div>
+                             <div>
+                                <label for="settings-main-confirm-password" class="block text-sm font-medium text-gray-700">Confirm New Main Password</label>
+                                <input id="settings-main-confirm-password" type="password" class="invoice-input mt-1" placeholder="Confirm new main password" />
+                            </div>
+                            <div class="flex justify-end items-center gap-4">
+                                <p id="main-login-message" class="text-sm font-medium"></p>
+                                <button id="save-main-login-btn" class="btn btn-blue">Update Main Login</button>
+                            </div>
+                        </div>
+                        
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 mt-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Settings Access Credentials (for pop-up)</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="settings-settings-username" class="block text-sm font-medium text-gray-700">Settings Username</label>
+                                <input id="settings-settings-username" class="invoice-input mt-1" />
+                            </div>
+                            <div>
+                                <label for="settings-settings-new-password" class="block text-sm font-medium text-gray-700">New Settings Password</label>
+                                <p class="text-xs text-gray-500 mt-1 mb-2">Only type here to change the password. Otherwise, leave blank.</p>
+                                <input id="settings-settings-new-password" type="password" class="invoice-input" placeholder="Enter new settings password" />
+                            </div>
+                             <div>
+                                <label for="settings-settings-confirm-password" class="block text-sm font-medium text-gray-700">Confirm New Settings Password</label>
+                                <input id="settings-settings-confirm-password" type="password" class="invoice-input mt-1" placeholder="Confirm new settings password" />
+                            </div>
+                            <div class="flex justify-end items-center gap-4">
+                                <p id="settings-login-message" class="text-sm font-medium"></p>
+                                <button id="save-settings-login-btn" class="btn btn-blue">Update Settings Login</button>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 mt-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Utilities</h3>
+                        </div>
+                        <div class="p-6">
+                            <label class="block text-sm font-medium text-gray-700">Reset Bill Counter</label>
+                            <p class="text-xs text-gray-500 mt-1 mb-2">Click this button to reset today's bill number back to '1'. (Note: This only resets the counter for today).</p>
+                            <button id="reset-counter-btn" class="btn btn-red text-sm">Reset Today's Bill Number</button>
+                            <p id="reset-message" class="text-green-600 text-sm font-medium mt-2 hidden"></p>
+                        </div>
+                        
+                    </div>
+                    <div class="bg-white shadow-md rounded-lg p-6 flex justify-end items-center space-x-4">
+                        <p id="save-success-message" class="text-green-600 font-medium hidden">
+                            Settings saved successfully!
+                        </p>
+                        <button id="save-settings-btn" class="btn btn-blue">Save All Other Settings</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        // --- LOGIN GUARD (MAIN) ---
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+        // --- END GUARD ---
+
+        // --- SETTINGS ACCESS GUARD ---
+        if (sessionStorage.getItem('settingsAccessGranted') !== 'true') {
+            alert('You must enter the admin password to access settings.');
+            window.location.href = 'index.html';
+        }
+        // --- END SETTINGS ACCESS GUARD ---
+
+
+        window.onload = () => {
+            let saveSuccessTimeout = null; 
+
+            const selectors = {
+                nav: document.getElementById('settings-nav'),
+                navLinks: document.querySelectorAll('#settings-nav .nav-link'),
+                sections: document.querySelectorAll('.settings-section'),
+                saveSettingsBtn: document.getElementById('save-settings-btn'),
+                settingsCompanyName: document.getElementById('settings-company-name'),
+                settingsCompanyInfo: document.getElementById('settings-company-info'),
+                settingsPaymentInfo: document.getElementById('settings-payment-info'),
+                settingsProductList: document.getElementById('settings-product-list'),
+                saveSuccessMessage: document.getElementById('save-success-message'),
+                settingsCompanyLogo: document.getElementById('settings-company-logo'),
+                settingsPaymentQR: document.getElementById('settings-payment-qr'),
+                settingsSealImage: document.getElementById('settings-seal-image'), 
+                
+                // --- START: Security Selectors (Modified) ---
+                // Main Login
+                settingsMainUsername: document.getElementById('settings-main-username'),
+                settingsMainNewPassword: document.getElementById('settings-main-new-password'),
+                settingsMainConfirmPassword: document.getElementById('settings-main-confirm-password'),
+                saveMainLoginBtn: document.getElementById('save-main-login-btn'),
+                mainLoginMessage: document.getElementById('main-login-message'),
+                
+                // Settings Login
+                settingsSettingsUsername: document.getElementById('settings-settings-username'),
+                settingsSettingsNewPassword: document.getElementById('settings-settings-new-password'),
+                settingsSettingsConfirmPassword: document.getElementById('settings-settings-confirm-password'),
+                saveSettingsLoginBtn: document.getElementById('save-settings-login-btn'),
+                settingsLoginMessage: document.getElementById('settings-login-message'),
+                // --- END: Security Selectors ---
+
+                backToInvoiceLink: document.getElementById('back-to-invoice-link'),
+
+                // --- Reset Button Selectors ---
+                resetCounterBtn: document.getElementById('reset-counter-btn'),
+                resetMessage: document.getElementById('reset-message'),
+            };
+
+            // Invoice general settings
+            const defaultSettings = {
+                companyName: "CloudAlls",
+                companyInfo: "www.cloudalls.com\n+91 918 826 8135 | +91 907 220 8135\ncloudalls.com@gmail.com",
+                paymentInfo: "UPI No: 907 220 8135\nUPI ID: cloudalls@sbi",
+                productList: [
+                    { "description": "Photography & Recording", "price": "800.00" },
+                    { "description": "Wall Opener", "price": "250.00" }
+                ],
+                companyLogo: "",
+                paymentQR: "",
+                sealImage: "", 
+            };
+            
+            // Default Main Login credentials
+            const mainDefaultCredentials = {
+                username: "admin",
+                password: "1234"
+            };
+
+            // Default Settings Access credentials
+            const settingsDefaultCredentials = {
+                username: "settings",
+                password: "admin"
+            };
+
+            // --- Navigation Logic ---
+            if (selectors.nav) {
+                selectors.nav.addEventListener('click', (e) => {
+                    const targetButton = e.target.closest('.nav-link');
+                    if (!targetButton) return;
+
+                    const targetId = targetButton.dataset.target;
+                    
+                    selectors.navLinks.forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    targetButton.classList.add('active');
+
+                    selectors.sections.forEach(section => {
+                        if (section.id === targetId) {
+                            section.classList.remove('hidden');
+                        } else {
+                            section.classList.add('hidden');
+                        }
+                    });
+                });
+            }
+            // --- End Navigation Logic ---
+
+            function getTodayKey() {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                return `${yyyy}-${mm}-${dd}`;
+            }
+
+            // --- START: Credential Functions (Separated) ---
+            function getMainLoginCredentials() {
+                const saved = localStorage.getItem('invoiceMainLogin');
+                if (!saved) {
+                    return mainDefaultCredentials;
+                }
+                return { ...mainDefaultCredentials, ...JSON.parse(saved) };
+            }
+
+            function saveMainLoginCredentials(username, password) {
+                localStorage.setItem('invoiceMainLogin', JSON.stringify({ username, password }));
+            }
+
+            function getSettingsLoginCredentials() {
+                const saved = localStorage.getItem('invoiceSettingsLogin');
+                if (!saved) {
+                    return settingsDefaultCredentials;
+                }
+                return { ...settingsDefaultCredentials, ...JSON.parse(saved) };
+            }
+
+            function saveSettingsLoginCredentials(username, password) {
+                localStorage.setItem('invoiceSettingsLogin', JSON.stringify({ username, password }));
+            }
+            // --- END: Credential Functions ---
+
+
+            function getSettings() {
+                const settings = localStorage.getItem('invoiceSettings');
+                const saved = settings ? JSON.parse(settings) : {};
+                return { ...defaultSettings, ...saved };
+            }
+
+            function saveSettings(settings) {
+                localStorage.setItem('invoiceSettings', JSON.stringify(settings));
+            }
+
+            function loadSettingsForm() {
+                // Load general settings
+                const settings = getSettings();
+                if (selectors.settingsCompanyName) selectors.settingsCompanyName.value = settings.companyName;
+                if (selectors.settingsCompanyInfo) selectors.settingsCompanyInfo.value = settings.companyInfo;
+                if (selectors.settingsPaymentInfo) selectors.settingsPaymentInfo.value = settings.paymentInfo;
+                if (selectors.settingsProductList) selectors.settingsProductList.value = JSON.stringify(settings.productList, null, 2);
+                if (selectors.settingsCompanyLogo) selectors.settingsCompanyLogo.value = settings.companyLogo;
+                if (selectors.settingsPaymentQR) selectors.settingsPaymentQR.value = settings.paymentQR;
+                if (selectors.settingsSealImage) selectors.settingsSealImage.value = settings.sealImage; 
+
+                // Load Main Login credentials form
+                const mainCredentials = getMainLoginCredentials();
+                if(selectors.settingsMainUsername) selectors.settingsMainUsername.value = mainCredentials.username;
+
+                // Load Settings Access credentials form
+                const settingsCredentials = getSettingsLoginCredentials();
+                if(selectors.settingsSettingsUsername) selectors.settingsSettingsUsername.value = settingsCredentials.username;
+            }
+
+            // This function saves ONLY the general settings (company info, logo, etc.)
+            function saveSettingsForm() {
+                try {
+                    const productList = JSON.parse(selectors.settingsProductList.value);
+                    if (!Array.isArray(productList)) throw new Error('Product list must be an array.');
+                    
+                    const newSettings = {
+                        companyName: selectors.settingsCompanyName.value,
+                        companyInfo: selectors.settingsCompanyInfo.value,
+                        paymentInfo: selectors.settingsPaymentInfo.value,
+                        productList: productList,
+                        companyLogo: selectors.settingsCompanyLogo.value,
+                        paymentQR: selectors.settingsPaymentQR.value,
+                        sealImage: selectors.settingsSealImage.value, 
+                    };
+                    saveSettings(newSettings);
+                    
+                    if (saveSuccessTimeout) clearTimeout(saveSuccessTimeout); 
+                    if (selectors.saveSuccessMessage) {
+                        selectors.saveSuccessMessage.classList.remove('hidden');
+                        selectors.saveSuccessMessage.classList.add('fade-in');
+                    }
+                    saveSuccessTimeout = setTimeout(() => {
+                        if (selectors.saveSuccessMessage) {
+                            selectors.saveSuccessMessage.classList.add('hidden');
+                            selectors.saveSuccessMessage.classList.remove('fade-in');
+                        }
+                    }, 3000);
+                    
+                } catch (error) {
+                    alert('Error saving product list. Please make sure it is valid JSON.\n\n' + error.message);
+                }
+            }
+
+            // --- START: New Handlers for separate logins ---
+
+            // Handles saving the MAIN login
+            function handleSaveMainLogin() {
+                const newUsername = selectors.settingsMainUsername.value.trim();
+                const newPassword = selectors.settingsMainNewPassword.value;
+                const confirmPassword = selectors.settingsMainConfirmPassword.value;
+                const currentCredentials = getMainLoginCredentials();
+                
+                let passwordToSave = currentCredentials.password; // Keep old password by default
+                let message = "";
+                let error = false;
+
+                if (newUsername === "") {
+                    message = "Username cannot be blank.";
+                    error = true;
+                }
+
+                if (newPassword !== "" || confirmPassword !== "") {
+                    if (newPassword === confirmPassword) {
+                        passwordToSave = newPassword; // Set new password
+                        message = "Username and Password updated.";
+                    } else {
+                        message = "Passwords do not match!";
+                        error = true;
+                    }
+                } else if (!error) {
+                    message = "Username updated successfully.";
+                }
+
+                if (!error) {
+                    saveMainLoginCredentials(newUsername, passwordToSave);
+                    selectors.mainLoginMessage.textContent = message;
+                    selectors.mainLoginMessage.className = "text-sm font-medium text-green-600";
+                    selectors.settingsMainNewPassword.value = "";
+                    selectors.settingsMainConfirmPassword.value = "";
+                } else {
+                    selectors.mainLoginMessage.textContent = message;
+                    selectors.mainLoginMessage.className = "text-sm font-medium text-red-600";
+                }
+
+                setTimeout(() => { selectors.mainLoginMessage.textContent = ""; }, 3000);
+            }
+
+            // Handles saving the SETTINGS ACCESS login
+            function handleSaveSettingsLogin() {
+                const newUsername = selectors.settingsSettingsUsername.value.trim();
+                const newPassword = selectors.settingsSettingsNewPassword.value;
+                const confirmPassword = selectors.settingsSettingsConfirmPassword.value;
+                const currentCredentials = getSettingsLoginCredentials();
+                
+                let passwordToSave = currentCredentials.password; // Keep old password by default
+                let message = "";
+                let error = false;
+
+                if (newUsername === "") {
+                    message = "Username cannot be blank.";
+                    error = true;
+                }
+
+                if (newPassword !== "" || confirmPassword !== "") {
+                    if (newPassword === confirmPassword) {
+                        passwordToSave = newPassword; // Set new password
+                        message = "Username and Password updated.";
+                    } else {
+                        message = "Passwords do not match!";
+                        error = true;
+                    }
+                } else if (!error) {
+                    message = "Username updated successfully.";
+                }
+
+                if (!error) {
+                    saveSettingsLoginCredentials(newUsername, passwordToSave);
+                    selectors.settingsLoginMessage.textContent = message;
+                    selectors.settingsLoginMessage.className = "text-sm font-medium text-green-600";
+                    selectors.settingsSettingsNewPassword.value = "";
+                    selectors.settingsSettingsConfirmPassword.value = "";
+                } else {
+                    selectors.settingsLoginMessage.textContent = message;
+                    selectors.settingsLoginMessage.className = "text-sm font-medium text-red-600";
+                }
+                
+                setTimeout(() => { selectors.settingsLoginMessage.textContent = ""; }, 3000);
+            }
+
+            // --- END: New Handlers ---
+
+            // Main "Save" button for general settings
+            if (selectors.saveSettingsBtn) {
+                selectors.saveSettingsBtn.addEventListener('click', saveSettingsForm);
+            } else {
+                console.error("Error: 'save-settings-btn' element not found.");
+            }
+            
+            // --- NEW LISTENERS for the two new save buttons ---
+            if (selectors.saveMainLoginBtn) {
+                selectors.saveMainLoginBtn.addEventListener('click', handleSaveMainLogin);
+            }
+             if (selectors.saveSettingsLoginBtn) {
+                selectors.saveSettingsLoginBtn.addEventListener('click', handleSaveSettingsLogin);
+            }
+            // --- END NEW LISTENERS ---
+            
+            // "Back to Invoice" link clears the settings access permission
+            if(selectors.backToInvoiceLink) {
+                selectors.backToInvoiceLink.addEventListener('click', (e) => {
+                    // e.preventDefault(); // Keep default behavior (go to index.html)
+                    sessionStorage.removeItem('settingsAccessGranted');
+                });
+            }
+
+            // Listener for the "Reset Bill Counter" button
+            if (selectors.resetCounterBtn) {
+                selectors.resetCounterBtn.addEventListener('click', () => {
+                    if (confirm("Are you sure you want to reset today's bill counter? The next bill number for today will be A1.")) {
+                        const dateKey = getTodayKey();
+                        const counterKey = `billCounter_${dateKey}`;
+                        
+                        localStorage.removeItem(counterKey);
+                        
+                        if (selectors.resetMessage) {
+                            selectors.resetMessage.textContent = "Today's bill counter has been reset to A1!";
+                            selectors.resetMessage.classList.remove('hidden');
+                            setTimeout(() => {
+                                selectors.resetMessage.classList.add('hidden');
+                            }, 3000);
+                        }
+                    }
+                });
+            }
+
+            // Initial Load
+            loadSettingsForm();
+        };
+    </script>
+</body>
+</html>
